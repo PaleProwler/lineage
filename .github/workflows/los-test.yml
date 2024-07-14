@@ -53,6 +53,13 @@ jobs:
             zip \
             zlib1g-dev
 
+      - name: Install repo tool
+        run: |
+          mkdir -p ~/.bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
+          chmod a+x ~/.bin/repo
+          export PATH="${HOME}/.bin:${PATH}"
+
       - name: Configure Git
         run: |
           git config --global user.name "ProAndroidBuilder"
@@ -60,7 +67,7 @@ jobs:
 
       - name: Initialize and sync repository
         run: |
-          repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1
+          repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --depth=1
           mkdir -p .repo/local_manifests
           git clone https://github.com/ObsidianMaximus/local_manifests -b lineage-21 .repo/local_manifests
           repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune -j$(nproc --all)
