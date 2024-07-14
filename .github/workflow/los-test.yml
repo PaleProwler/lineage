@@ -1,0 +1,44 @@
+name: Build LineageOS 21
+
+on:
+  push:
+    branches:
+      - main  # Replace with your main branch name
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Initialize and sync repository
+        run: |
+          git config --global user.name "ProAndroidBuilder" # This can be any name, even your real name.
+	  git config --global user.email "android@veryrealemail.com" # This should be your email.
+          repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1
+          mkdir -p .repo/local_manifests
+          git clone https://github.com/ObsidianMaximus/local_manifests -b lineage-21 .repo/local_manifests
+          repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune -j$(nproc --all)
+          repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune -j$(nproc --all)
+          repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune -j$(nproc --all)
+          rm -rf .repo  # Remove .repo folder to save space
+
+      - name: Setup environment and build
+        run: |
+          source build/envsetup.sh
+          breakfast bitra userdebug
+          brunch bitra
+
+      - name: Upload build artifact
+        id: upload-release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.repository.releases_url }}
+          asset_path: out/target/product/alioth/*.zip
+          asset_name: lineageos-21-alioth-$(date +'%Y%m%d').zip
+          asset_content_type: application/zip
