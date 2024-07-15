@@ -1,25 +1,17 @@
 name: Build LineageOS 21
 
 on:
-  push:
-    branches:
-      - main  # Replace with your main branch name
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      PATH: ${{ github.workspace }}/.bin:${{ github.workspace }}/.local/bin:${PATH}
-
     steps:
-      - name: Create lineage directory if not exists
-        run: |
-          mkdir -p lineage
-
       - name: Install Dependencies and repo tool
         run: |
+          mkdir -p lineage
+          cd lineage
           sudo apt-get update
           sudo apt-get install -y \
             bc \
@@ -56,23 +48,15 @@ jobs:
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
           chmod a+x ~/.bin/repo
 
-      - name: Configure Git
-        run: |
           git config --global user.name "ProAndroidBuilder"
           git config --global user.email "android@veryrealemail.com"
 
-      - name: Initialize and sync repository
-        run: |
-          cd lineage
           repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --depth=1
           mkdir -p .repo/local_manifests
           git clone https://github.com/ObsidianMaximus/local_manifests -b lineage-21 .repo/local_manifests
           repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune -j$(nproc --all)
           rm -rf .repo  # Remove .repo folder to save space
 
-      - name: Setup environment and build
-        run: |
-          cd lineage
           source build/envsetup.sh
           breakfast bitra userdebug
           brunch bitra
